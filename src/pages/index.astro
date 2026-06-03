@@ -18,7 +18,7 @@ const pathways = [
   { label: 'Asia', href: '/museum/?place=asia', note: 'Sculpture from across Asia.' },
 ];
 
-const description = 'A digital museum of sculpture — explore 175 works in 3D, from antiquity to the modern era.';
+const description = 'A digital museum of sculpture — explore 174 works in 3D, from antiquity to the modern era.';
 ---
 
 <BaseLayout
@@ -34,7 +34,6 @@ const description = 'A digital museum of sculpture — explore 175 works in 3D, 
   }}
 >
   <section class="home-hero" aria-labelledby="home-title">
-    <img src={withBase(featured.posterImage)} alt="" width="720" height="900" loading="eager" decoding="async" />
     <div class="band-inner hero-content">
       <p class="eyebrow">Digital sculpture museum</p>
       <h1 id="home-title">Five thousand years of sculpture, up close.</h1>
@@ -55,10 +54,11 @@ const description = 'A digital museum of sculpture — explore 175 works in 3D, 
     <div class="feature-block">
       <Viewer
         glb={featured.hasPreview ? withBase(featured.modelGlb) : ''}
-        poster={withBase(featured.posterImage)}
+        poster={withBase(featured.thumbnailImage)}
         title={featured.title}
         hud={false}
         tag={featured.hasPreview ? '3D MODEL' : 'PHOTOGRAPH'}
+        upAxis={featured.modelUpAxis}
       />
       <div>
         <p class="eyebrow">Featured piece</p>

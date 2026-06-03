@@ -1,6 +1,7 @@
 import rawCatalog from '../data/catalog.json';
 import rawPreviews from '../data/previews.json';
 import rawRenders from '../data/renders.json';
+import rawOrientations from '../data/orientations.json';
 
 type RawWork = {
   slug: string;
@@ -10,6 +11,7 @@ type RawWork = {
   year?: string | null;
   year_sort?: number | null;
   material?: string | null;
+  dimensions?: string | null;
   museum?: string | null;
   source_institution?: string | null;
   source_url?: string | null;
@@ -52,6 +54,7 @@ export type Work = {
   movement: string;
   geography: string;
   sourceMuseum: string;
+  museum: string;
   department: string;
   medium: string;
   materials: string[];
@@ -67,6 +70,7 @@ export type Work = {
   posterImage: string;
   thumbnailImage: string;
   modelGlb: string;
+  modelUpAxis: string;
   modelStats: string;
   featuredWeight: number;
   heroCrop: string;
@@ -86,6 +90,7 @@ export type Facet = {
 const rawWorks = rawCatalog as RawWork[];
 const previewMap = rawPreviews as Record<string, Preview>;
 const renderSet = new Set(rawRenders as string[]);
+const orientationMap = rawOrientations as Record<string, string>;
 
 const makerCollections = new Set(['michelangelo', 'donatello', 'verrocchio', 'lorenzi', 'bouchardon', 'rodin']);
 
@@ -330,7 +335,8 @@ function normalize(raw: RawWork, fallbackIndex: number): Work {
   const geography = geographyFor(raw);
   const maker = makerFor(raw);
   const materials = materialsFor(raw);
-  const sourceMuseum = clean(raw.museum) || clean(raw.source_institution);
+  const sourceMuseum = clean(raw.source_institution);
+  const museum = clean(raw.museum);
   const preview = previewMap[raw.slug];
   const movement = movementFor(raw, era);
   const description = summaryFor(raw);
@@ -343,6 +349,7 @@ function normalize(raw: RawWork, fallbackIndex: number): Work {
     movement,
     maker,
     sourceMuseum,
+    museum,
     ...materials,
     collectionLabels[collection] || '',
   ].filter((value) => value && !/not yet recorded|pending|unassigned/i.test(value));
@@ -364,10 +371,11 @@ function normalize(raw: RawWork, fallbackIndex: number): Work {
     movement,
     geography,
     sourceMuseum,
+    museum,
     department: '',
     medium,
     materials,
-    dimensions: '',
+    dimensions: clean(raw.dimensions),
     accession: '',
     creditLine: '',
     rights: clean(raw.license) || 'Rights review pending',
@@ -379,6 +387,7 @@ function normalize(raw: RawWork, fallbackIndex: number): Work {
     posterImage: `/previews/posters/${raw.slug}/poster.svg`,
     thumbnailImage: renderSet.has(raw.slug) ? `/previews/renders/${raw.slug}/thumb.webp` : `/previews/posters/${raw.slug}/poster.svg`,
     modelGlb: preview?.url || '',
+    modelUpAxis: orientationMap[raw.slug] || 'auto',
     modelStats: modelStatsFor(preview, raw),
     featuredWeight: Math.max(1, 5 - Number(raw.tier || 3)),
     heroCrop: 'center',

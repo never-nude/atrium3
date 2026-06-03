@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import FacetExplorer from '../../components/FacetExplorer.astro';
 import WorkCard from '../../components/WorkCard.astro';
+import Viewer from '../../components/Viewer.astro';
 import TimelineStrip from '../../components/TimelineStrip.astro';
 import { collectionHighlights, facets, featuredWorkForDate, works } from '../../lib/catalog';
 import { withBase } from '../../lib/urls';
@@ -12,7 +13,7 @@ const highlights = collectionHighlights().slice(0, 4);
 
 <BaseLayout
   title="Museum"
-  description="Browse 175 sculptures by era, place, material, and maker."
+  description="Browse 174 sculptures by era, place, material, and maker."
   image={featured.posterImage}
 >
   <section class="page-shell" aria-labelledby="museum-title">
@@ -24,9 +25,14 @@ const highlights = collectionHighlights().slice(0, 4);
 
   <section class="section" aria-labelledby="featured-object">
     <div class="feature-block">
-      <a class="feature-block__media" href={withBase(featured.route)} aria-label={`Open ${featured.title}`}>
-        <img src={withBase(featured.posterImage)} alt={`${featured.title} — still image`} width="720" height="900" loading="eager" decoding="async" />
-      </a>
+      <Viewer
+        glb={featured.hasPreview ? withBase(featured.modelGlb) : ''}
+        poster={withBase(featured.thumbnailImage)}
+        title={featured.title}
+        hud={false}
+        tag={featured.hasPreview ? '3D MODEL' : 'PHOTOGRAPH'}
+        upAxis={featured.modelUpAxis}
+      />
       <div>
         <p class="eyebrow">Featured piece</p>
         <h2 id="featured-object">{featured.title}</h2>

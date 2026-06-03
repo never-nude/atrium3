@@ -5,9 +5,9 @@ Full Astro project. Run it locally:
     npm install
     npm run dev          # http://localhost:4321
 
-Open any piece to orbit the real 3D preview. The viewer auto-loads after first
-paint and supports brightness, texture, light angle, wireframe, reset, and
-right-drag pan. Good ones to try:
+Open any piece and tap **Examine in 3D** to orbit the real 3D preview. The
+viewer supports exposure, texture, light angle, auto-rotate, wireframe, reset,
+and right-drag pan. Good ones to try:
 
     /works/michelangelo/david/
     /works/laocoon/
@@ -21,4 +21,4 @@ Other entry points:
 
 Prefer the production build?  `npm run build && npm run preview`
 
-All 175 works have web-ready GLB previews and rendered WebP grid thumbnails.
+All 174 active works have web-ready GLB previews and rendered WebP grid thumbnails.

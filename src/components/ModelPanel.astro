@@ -18,16 +18,16 @@ const hasModel = Boolean(work.modelGlb);
         <p class="eyebrow">In 3D</p>
         <h2 id="viewer-title">Turn it around. Look closely.</h2>
       </div>
-      <p class="lede">Drag to spin it, right-drag to pan, scroll to move in. Use the dials for light and roughness, or switch on the wireframe to see how it's built.</p>
     </div>
 
     <div class="viewer-grid">
       <Viewer
         glb={hasModel ? withBase(work.modelGlb) : ''}
-        poster={withBase(work.posterImage)}
+        poster={withBase(work.thumbnailImage)}
         title={work.title}
         hud={true}
         tag={hasModel ? '3D MODEL' : 'PHOTOGRAPH'}
+        upAxis={work.modelUpAxis}
       />
 
       <aside class="viewer-copy" aria-label="About this view">
@@ -35,11 +35,11 @@ const hasModel = Boolean(work.modelGlb);
           <>
             <h3>What you can do</h3>
             <ul class="how-list">
-              <li><strong>Spin it.</strong> Drag in any direction to see every side.</li>
-              <li><strong>Pan and zoom.</strong> Right-drag to slide across it; scroll or pinch to move in.</li>
-              <li><strong>Light.</strong> Brighten or dim, and swing the light around to rake across the surface.</li>
+              <li><strong>Spin it.</strong> Drag in any direction; right-drag to pan, scroll to zoom.</li>
+              <li><strong>Exposure.</strong> Brighten or dim the whole view.</li>
+              <li><strong>Light.</strong> Swing the light around to rake across the surface.</li>
               <li><strong>Texture.</strong> Slide from rough to shiny — useful for bronze and wood.</li>
-              <li><strong>Wireframe.</strong> Switch it on to see how the shape is built.</li>
+              <li><strong>Auto-rotate &amp; wireframe.</strong> Toggle the slow turn, or see how it's built.</li>
             </ul>
             <p class="fine">Built from a 3D scan. The photo and the facts stay on the page if the model can't load.</p>
           </>

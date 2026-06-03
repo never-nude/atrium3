@@ -24,11 +24,11 @@ const factLine = [work.maker, work.displayDate, work.geography, work.medium || w
 const metaDescription = `${work.title}${factLine ? ' — ' + factLine : ''}.`;
 const factRows = ([
   ['Maker', work.maker],
-  ['Time period', /not yet recorded/i.test(work.displayDate) ? '' : work.displayDate],
-  ['Location', /unassigned/i.test(work.geography) ? '' : work.geography],
+  ['Year', /not yet recorded/i.test(work.displayDate) ? '' : work.displayDate],
   ['Material', work.medium || work.materials.join(', ')],
   ['Dimensions', work.dimensions],
-  ['Where it’s displayed', work.sourceMuseum],
+  ['Origin', /unassigned/i.test(work.geography) ? '' : work.geography],
+  ['On display at', work.museum],
 ] as Array<[string, string]>).filter(([, v]) => Boolean(v && String(v).trim()));
 const jsonLd = {
   '@context': 'https://schema.org',

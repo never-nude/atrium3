@@ -5,14 +5,15 @@ type Props = {
   title: string;
   hud?: boolean;
   tag?: string;
+  upAxis?: string;
 };
-const { glb = '', poster, title, hud = true, tag } = Astro.props;
+const { glb = '', poster, title, hud = true, tag, upAxis = 'auto' } = Astro.props;
 const hasModel = Boolean(glb);
 const uid = Math.random().toString(36).slice(2, 8);
 ---
 
 <div class="viewer" data-viewer>
-  <div class="model-stage" data-stage data-glb={hasModel ? glb : ''}>
+  <div class="model-stage" data-stage data-glb={hasModel ? glb : ''} data-up-axis={upAxis}>
     <span class="stage-corner stage-corner--tl" aria-hidden="true"></span>
     <span class="stage-corner stage-corner--tr" aria-hidden="true"></span>
     <span class="stage-corner stage-corner--bl" aria-hidden="true"></span>
@@ -30,13 +31,16 @@ const uid = Math.random().toString(36).slice(2, 8);
         Examine in 3D
       </button>
     )}
-    <p class="stage-loading" data-loading hidden>Loading the model…</p>
+    <div class="stage-loading" data-loading hidden>
+      <span class="spinner" aria-hidden="true"></span>
+      <span class="loading-text">Loading…</span>
+    </div>
   </div>
 
   {hud && hasModel && (
     <div class="viewer-hud" data-hud-panel hidden>
       <div class="hud-control">
-        <label for={`b-${uid}`}>Brightness <span class="hud-read" data-read-brightness>20%</span></label>
+        <label for={`b-${uid}`}>Exposure <span class="hud-read" data-read-brightness>20%</span></label>
         <input id={`b-${uid}`} type="range" min="5" max="120" step="1" value="20" data-brightness />
       </div>
       <div class="hud-control">
@@ -48,6 +52,10 @@ const uid = Math.random().toString(36).slice(2, 8);
         <input id={`l-${uid}`} type="range" min="0" max="100" step="1" value="15" data-light />
       </div>
       <div class="hud-control hud-control--row">
+        <label class="hud-switch">
+          <input type="checkbox" data-autorotate checked />
+          <span>Auto-rotate</span>
+        </label>
         <label class="hud-switch">
           <input type="checkbox" data-wireframe />
           <span>Wireframe</span>
@@ -68,6 +76,7 @@ const uid = Math.random().toString(36).slice(2, 8);
     setTexture: (pct: number) => void;
     setLightAngle: (pct: number) => void;
     setWireframe: (on: boolean) => void;
+    setAutoRotate: (on: boolean) => void;
     reset: () => void;
   };
 
@@ -116,15 +125,23 @@ const uid = Math.random().toString(36).slice(2, 8);
     controls.zoomSpeed = 0.8;
     controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN };
     controls.autoRotate = !reduce;
-    controls.autoRotateSpeed = 0.6;
+    controls.autoRotateSpeed = 0.5;
 
     const loader = new GLTFLoader();
     loader.setMeshoptDecoder(MeshoptDecoder);
     const gltf = await loader.loadAsync(glb);
     const model = gltf.scene;
+    const [upAxis, fitValue, yawValue] = (stage.dataset.upAxis || 'auto').toLowerCase().split(':');
+    const fitOverride = Number(fitValue) || 0;
+    const yawOverride = Number(yawValue) || 0;
 
+    const scanHelpers: any[] = [];
     const materials: any[] = [];
     model.traverse((obj: any) => {
+      if (/^(?:cubo|disco)(?:_|\.|$)/i.test(obj.name || '') || /^(?:cubo|disco)(?:_|\.|$)/i.test(obj.material?.name || '')) {
+        scanHelpers.push(obj);
+        return;
+      }
       if (obj.isMesh && obj.material) {
         const list = Array.isArray(obj.material) ? obj.material : [obj.material];
         for (const m of list) {
@@ -133,10 +150,25 @@ const uid = Math.random().toString(36).slice(2, 8);
         }
       }
     });
+    for (const helper of scanHelpers) helper.parent?.remove(helper);
 
     // Normalize to ~1 unit and center (source meshes vary wildly in scale).
     let box = new THREE.Box3().setFromObject(model);
     let size = box.getSize(new THREE.Vector3());
+    const isLikelyZUp = size.z > size.y * 1.15 && size.z > Math.min(size.x, size.y) * 1.15;
+    let transformed = false;
+    if (upAxis === 'z' || (upAxis === 'auto' && isLikelyZUp)) {
+      model.rotation.x -= Math.PI / 2;
+      transformed = true;
+    }
+    if (yawOverride) {
+      model.rotation.y += (yawOverride * Math.PI) / 180;
+      transformed = true;
+    }
+    if (transformed) {
+      box = new THREE.Box3().setFromObject(model);
+      size = box.getSize(new THREE.Vector3());
+    }
     const maxDim = Math.max(size.x, size.y, size.z) || 1;
     model.scale.setScalar(1 / maxDim);
     box = new THREE.Box3().setFromObject(model);
@@ -145,7 +177,9 @@ const uid = Math.random().toString(36).slice(2, 8);
     model.position.sub(center);
     scene.add(model);
 
-    const dist = (1 / (2 * Math.tan((camera.fov * Math.PI) / 360))) * 1.35;
+    const isWideLow = Math.max(size.x, size.z) > Math.max(size.y * 1.8, 0.65);
+    const fit = fitOverride || (isWideLow ? 1.9 : 1.35);
+    const dist = (1 / (2 * Math.tan((camera.fov * Math.PI) / 360))) * fit;
     camera.near = 0.01;
     camera.far = 100;
     camera.position.set(dist * 0.55, dist * 0.34, dist * 0.9);
@@ -200,6 +234,7 @@ const uid = Math.random().toString(36).slice(2, 8);
       setTexture: (pct) => { const r = 1 - pct / 100; for (const m of materials) { m.roughness = r; m.needsUpdate = true; } },
       setLightAngle: (pct) => placeKey(pct),
       setWireframe: (on) => { for (const m of materials) { m.wireframe = on; } },
+      setAutoRotate: (on) => { controls.autoRotate = on; },
       reset: () => { camera.position.copy(home.pos); controls.target.copy(home.tgt); controls.update(); },
     };
   }
@@ -218,30 +253,33 @@ const uid = Math.random().toString(36).slice(2, 8);
     async function start() {
       if (started) return; started = true;
       if (activate) activate.hidden = true;
+      if (poster) poster.style.opacity = '0';
       if (loading) loading.hidden = false;
       try {
         const viewer = await buildViewer(stage!, glb);
         if (loading) loading.hidden = true;
-        if (poster) poster.style.opacity = '0';
         stage!.classList.add('is-live');
         if (hint) hint.hidden = false;
         if (hud) {
           hud.hidden = false;
+          const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
           const brightness = hud.querySelector('[data-brightness]') as HTMLInputElement | null;
           const texture = hud.querySelector('[data-texture]') as HTMLInputElement | null;
+          const light = hud.querySelector('[data-light]') as HTMLInputElement | null;
+          const autorotate = hud.querySelector('[data-autorotate]') as HTMLInputElement | null;
           const wire = hud.querySelector('[data-wireframe]') as HTMLInputElement | null;
           const reset = hud.querySelector('[data-reset]') as HTMLButtonElement | null;
           const readB = hud.querySelector('[data-read-brightness]') as HTMLElement | null;
           if (brightness) { viewer.setBrightness(+brightness.value); brightness.addEventListener('input', () => { viewer.setBrightness(+brightness.value); if (readB) readB.textContent = `${brightness.value}%`; }); }
           if (texture) { viewer.setTexture(+texture.value); texture.addEventListener('input', () => viewer.setTexture(+texture.value)); }
-          const light = hud.querySelector('[data-light]') as HTMLInputElement | null;
           if (light) { viewer.setLightAngle(+light.value); light.addEventListener('input', () => viewer.setLightAngle(+light.value)); }
+          if (autorotate) { if (reduce) autorotate.checked = false; viewer.setAutoRotate(autorotate.checked); autorotate.addEventListener('change', () => viewer.setAutoRotate(autorotate.checked)); }
           if (wire) wire.addEventListener('change', () => viewer.setWireframe(wire.checked));
           if (reset) reset.addEventListener('click', () => viewer.reset());
         }
         stage!.addEventListener('dblclick', () => viewer.reset());
       } catch (err) {
-        if (loading) { loading.hidden = false; loading.textContent = 'This browser could not open the 3D model. The photo is shown instead.'; }
+        if (loading) loading.hidden = true;
         if (poster) poster.style.opacity = '1';
         if (activate) activate.hidden = false;
         started = false;

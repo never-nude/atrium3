@@ -919,14 +919,6 @@
     "faces": 150000,
     "sourceFaces": 642984
   },
-  "kneeling-archer": {
-    "url": "/models/previews/kneeling-archer/preview.glb",
-    "bytes": 454092,
-    "sourceBytes": 20005084,
-    "sourceFormat": "stl",
-    "faces": 104583,
-    "sourceFaces": 400100
-  },
   "kneeling-youth": {
     "url": "/models/previews/kneeling-youth/preview.glb",
     "bytes": 489672,
